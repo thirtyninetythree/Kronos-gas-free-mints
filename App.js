@@ -1,53 +1,46 @@
-import { useState, useEffect } from 'react'
-import detectEthereumProvider from '@metamask/detect-provider'
+import { useState, useEffect, useRef } from 'react'
 
 import abi from './contracts/Kronos.json'
 import { Navbar, Form, Footer } from './components'
 import { Box } from '@mui/material'
-import { useRef } from 'react'
 
 const Web3 = require('web3')
 const { RelayProvider } = require('@opengsn/provider')
-const address = '' //left blank intentionally
+const address = ''// left blank intentionally
 
 function App() {
   const [connectedAccount, setConnectedAccount] = useState(null)
   const [txHash, setTxHash] = useState(null)
   const [open, setOpen] = useState(false)
   const web3 = useRef(new Web3(window.ethereum))
+  const provider = useRef()
 
   let currentAccount
-  const paymasterAddress = '0xdA78a11FD57aF7be2eDD804840eA7f4c2A38801d' // kovan testnet
+  const paymasterAddress = '0xdA78a11FD57aF7be2eDD804840eA7f4c2A38801d'
   const config = {
     paymasterAddress,
     loggerConfiguration: {
       logLevel: 'debug',
-      // loggerUrl: 'logger.opengsn.org',
+
+      loggerUrl: 'http://logger.opengsn.org/',
     },
   }
-  var fromAddress
 
   useEffect(() => {
     async function load() {
-      const provider = await RelayProvider.newProvider({
-        provider: window.ethereum,
+
+      provider.current = await RelayProvider.newProvider({
+        provider: web3.current.currentProvider,
         config,
       }).init()
-
-      web3.current = new Web3(provider)
-      fromAddress = provider.newAccount().address
-      console.log(`fromAddress = ${fromAddress}`)
-      window.ethereum.on('accountsChanged', handleAccountsChanged)
+      console.log('provider.current' + provider.current)
+      web3.current = new Web3(provider.current)
     }
+
     load()
-  })
-
-  useEffect(() => {
     window.ethereum.on('accountsChanged', handleAccountsChanged)
-  }, [connectedAccount])
+  }, [])
 
-  const contract = new web3.current.eth.Contract(abi, address)
-  contract.setProvider(web3.current.currentProvider)
   async function connect() {
     console.log('connecting..')
     if (typeof window.ethereum === 'undefined') {
@@ -67,7 +60,7 @@ function App() {
       })
   }
   function handleAccountsChanged(accounts) {
-    if (accounts?.length === 0) {
+    if (accounts.length === 0) {
       console.log('Connect to metamask in handle accounts')
     } else if (accounts[0] !== currentAccount) {
       currentAccount = accounts[0]
@@ -75,11 +68,10 @@ function App() {
     }
   }
 
-  function mint(_tokenID) {
-    console.log(`connectedAccount ${connectedAccount}`)
-    console.log(`fromAddress ${fromAddress}`)
-   
-    contract.methods
+  async function mint(_tokenID) {
+    const contract = new web3.current.eth.Contract(abi, address)
+    console.log(`minting to: ... ${connectedAccount}`)
+    await contract.methods
       .safeMint(connectedAccount, _tokenID)
       .send({ from: connectedAccount })
       .on('transactionHash', function (hash) {
