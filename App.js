@@ -6,8 +6,9 @@ import { Box, CircularProgress } from '@mui/material'
 
 const Web3 = require('web3')
 const { RelayProvider } = require('@opengsn/provider')
-
-const address =  "" //left blank intentionally
+// const address = '0xeF6e882246A973F6191251ef6F8eA679EEA04eD4' //kovan //onlyOwner
+const address =  "0x353686dEB35E150DC50af795304d91D3a2f8Ed3F"
+// const address = '0x8dF0bA3c28671382Ad301c963b1Ce7FF3Cd3E992' //ropsten
 
 function App() {
   const [connectedAccount, setConnectedAccount] = useState(null)
@@ -19,6 +20,7 @@ function App() {
   const provider = useRef()
 
   let currentAccount
+ 
   const paymasterAddress = '0xB19D34ca1A6B37E84cc87E3F7D0893AD897e7b5D' //kovan
   // const paymasterAddress = '0x05319d82fa69EA8434A967CdF4A2699Db4Ff40e8' //ropsten
   const config = {
@@ -98,7 +100,7 @@ function App() {
       .safeMint(connectedAccount, _tokenID)
       .send({
         from: connectedAccount,
-        to: address, //get a better way to estimate gas, gasPrice
+        to: address,
         gas: 1000000,
         gasLimit: 10000000,
         gasPrice: web3.current.utils.toWei('2', 'gwei'),
